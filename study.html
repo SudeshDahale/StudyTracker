@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      color: #fff;
+      transition: background 0.5s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    body.login-bg {
+      background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2111&auto=format&fit=crop&ixlib=rb-4.0.3') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    body.main-bg {
+      background: url('https://images.unsplash.com/photo-1447433819943-74a20887a81e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: -1;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"%3E%3Cg fill="%23ffffff" opacity="0.6"%3E%3Ccircle cx="100" cy="100" r="2"/%3E%3Ccircle cx="700" cy="200" r="1"/%3E%3Ccircle cx="400" cy="600" r="2"/%3E%3Ccircle cx="200" cy="300" r="1"/%3E%3Ccircle cx="600" cy="700" r="2"/%3E%3C/g%3E%3C/svg%3E') no-repeat center;
+      animation: twinkle 3s infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 700;
+      background: linear-gradient(90deg, #ff6f61, #ffcb77);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 10px rgba(255, 107, 97, 0.5);
+      margin: clamp(1rem, 3vw, 2rem) 0;
+      animation: glow 2s ease-in-out infinite alternate;
+      z-index: 1;
+      text-align: center;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px rgba(255, 107, 97, 0.5), 0 0 20px rgba(255, 203, 119, 0.3); }
+      to { text-shadow: 0 0 20px rgba(255, 107, 97, 0.7), 0 0 30px rgba(255, 203, 119, 0.5); }
+    }
+
+    .card {
+      width: 90%;
+      max-width: 700px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: clamp(1rem, 3vw, 2rem);
+      margin: clamp(1rem, 2vw, 1.5rem) auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      z-index: 1;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .text-xl {
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      font-weight: 600;
+      color: #ffcb77;
+      text-shadow: 0 0 5px rgba(255, 203, 119, 0.5);
+    }
+
+    .text-3xl {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .button {
+      background: linear-gradient(45deg, #ff6f61, #ffcb77);
+      color: #1a0933;
+      padding: clamp(8px, 2vw, 12px) clamp(16px, 3vw, 24px);
+      border-radius: 50px;
+      border: none;
+      width: 100%;
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: clamp(0.5rem, 2vw, 1rem);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 107, 97, 0.5);
+    }
+
+    .button:hover {
+      background: linear-gradient(45deg, #ffcb77, #ff6f61);
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(255, 107, 97, 0.7);
+    }
+
+    .button:disabled {
+      background: linear-gradient(45deg, #666, #999);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .button-destructive {
+      background: linear-gradient(45deg, #f44336, #ff6f61);
+    }
+
+    .button-destructive:hover {
+      background: linear-gradient(45deg, #ff6f61, #f44336);
+    }
+
+    #logout-button {
+      background: linear-gradient(45deg, #2196F3, #64b5f6);
+    }
+
+    #logout-button:hover {
+      background: linear-gradient(45deg, #64b5f6, #2196F3);
+    }
+
+    input {
+      width: 100%;
+      padding: clamp(8px, 2vw, 12px);
+      margin-top: clamp(0.5rem, 2vw, 1rem);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #ffcb77;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 10px rgba(255, 203, 119, 0.5);
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .progress {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      margin-top: clamp(0.5rem, 2vw, 1rem);
+      height: clamp(10px, 2vw, 15px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 50px;
+      background: linear-gradient(90deg, #ff6f61, #ffcb77);
+      transition: width 0.5s ease-in-out;
+      box-shadow: 0 0 10px rgba(255, 107, 97, 0.7);
+    }
+
+    #study-logs {
+      list-style: none;
+      margin-top: clamp(0.5rem, 2vw, 1rem);
+    }
+
+    #study-logs li {
+      padding: clamp(6px, 1.5vw, 8px) 0;
+      color: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: color 0.3s ease;
+      font-size: clamp(0.8rem, 2vw, 1rem);
+    }
+
+    #study-logs li:hover {
+      color: #ffcb77;
+    }
+
+    .ranking-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: clamp(1rem, 2vw, 1.5rem);
+    }
+
+    .ranking-table th {
+      background: linear-gradient(45deg, #ff6f61, #ffcb77);
+      color: #1a0933;
+      padding: clamp(8px, 2vw, 12px);
+      font-weight: 600;
+      text-align: left;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+
+    .ranking-table th:first-child {
+      border-top-left-radius: 10px;
+    }
+
+    .ranking-table th:last-child {
+      border-top-right-radius: 10px;
+    }
+
+    .ranking-table td {
+      padding: clamp(8px, 2vw, 12px);
+      color: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: background 0.3s ease;
+      font-size: clamp(0.8rem, 2vw, 1rem);
+    }
+
+    .ranking-table tr:hover td {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 480px) {
+      .card { width: 95%; padding: 1rem; }
+      h1 { margin: 1rem 0; }
+      .button { padding: 8px 16px; }
+      input { padding: 8px; }
+      .progress { height: 10px; }
+      .ranking-table th, .ranking-table td { padding: 8px; }
+    }
+
+    @media (min-width: 481px) and (max-width: 768px) {
+      .card { width: 90%; padding: 1.5rem; }
+      .button { padding: 10px 20px; }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .card { width: 85%; max-width: 600px; }
+    }
+
+    @media (min-width: 1025px) {
+      .card { width: 80%; max-width: 700px; }
+    }
+  </style>
+</head>
+<body class="login-bg">
+  <h1 class="text-xl font-bold mb-6">🕒 Study Tracker 200-Hour Challenge</h1>
+  <div class="card" id="user-card">
+    <h2 class="text-xl">👤 Sign In</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button class="button" id="login-button">Log In</button>
+  </div>
+
+  <div class="card" id="study-tracker" style="display: none;">
+    <div class="text-center">
+      <h2 class="text-xl">⏱️ Timer</h2>
+      <p class="text-3xl" id="elapsed-time">00:00:00</p>
+      <button class="button" id="start-button">Start Studying</button>
+      <button class="button button-destructive" id="stop-button" style="display: none;">Stop & Save Time</button>
+      <button class="button" id="logout-button" style="background-color: #2196F3;">Log Out</button>
+    </div>
+  </div>
+
+  <div class="card" id="progress-card" style="display: none;">
+    <div>
+      <h2 class="text-xl">Progress</h2>
+      <p id="total-hours">Total Hours: 0.00 / 200</p>
+      <div class="progress">
+        <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+      </div>
+      <button class="button" id="download-pdf-button">📄 Download Summary (PDF)</button>
+    </div>
+  </div>
+
+  <div class="card" id="study-logs-card" style="display: none;">
+    <div>
+      <h2 class="text-xl">📋 Study Logs</h2>
+      <ul id="study-logs"></ul>
+    </div>
+  </div>
+
+  <div class="card" id="leaderboard-card" style="display: none;">
+    <div>
+      <h2 class="text-xl">🏆 Leadership Dashboard</h2>
+      <table class="ranking-table" id="ranking-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Username</th>
+            <th>Total Hours</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (Modular, via CDN) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC96gt8J80xUoOQNRlX8mAqXgom8zFde7I",
+      authDomain: "studytracker-d5c22.firebaseapp.com",
+      databaseURL: "https://studytracker-d5c22-default-rtdb.firebaseio.com",
+      projectId: "studytracker-d5c22",
+      storageBucket: "studytracker-d5c22.firebasestorage.app",
+      messagingSenderId: "805573474192",
+      appId: "1:805573474192:web:45cf5bd9d8be04b17ea515",
+      measurementId: "G-3PGS7L7NJG"
+    };
+
+    // Initialize Firebase with retry mechanism
+    let db;
+    let firebaseInitialized = false;
+    function initializeFirebase(attempt = 1, maxAttempts = 3) {
+      try {
+        const app = initializeApp(firebaseConfig);
+        db = getDatabase(app);
+        getAnalytics(app); // Initialize analytics
+        firebaseInitialized = true;
+        console.log("Firebase initialized successfully");
+      } catch (error) {
+        console.error(`Firebase initialization failed (attempt ${attempt}):`, error.message);
+        if (attempt < maxAttempts) {
+          console.log(`Retrying Firebase initialization (attempt ${attempt + 1})...`);
+          setTimeout(() => initializeFirebase(attempt + 1, maxAttempts), 1000);
+        } else {
+          console.error("All Firebase initialization attempts failed");
+          alert(`Failed to connect to the database: ${error.message}. Using local mode, but data won't sync across devices.`);
+          setupApp();
+        }
+      }
+    }
+
+    // Initialize Firebase
+    initializeFirebase();
+
+    // jsPDF (for PDF download)
+    const { jsPDF } = window.jspdf;
+
+    const predefinedUsers = {
+      "Sudesh": "Sudesh",
+      "Sahil": "Sahil",
+      "Sakshi": "Sakshi",
+      "Aarti": "Aarti",
+      "Vigyat": "Vigyat",
+      "Yash": "Yash",
+      "Samyak": "Samyak",
+      "Soham": "Soham",
+      "Mihir": "Mihir",
+      "Ronak": "Ronak",
+      "Pragati": "Pragati",
+      "Abhishek": "Abhishek",
+      "user1": "user1",
+      "user2": "user2",
+      "user3": "user3"
+    };
+
+    let user = localStorage.getItem("currentUser");
+    let total = 0;
+    let startTime = null;
+    let isTiming = false;
+    let timerInterval = null;
+    const goal = 200;
+
+    // Local storage fallback for logs
+    let localLogs = JSON.parse(localStorage.getItem("studyLogs")) || {};
+    Object.keys(predefinedUsers).forEach(username => {
+      if (!localLogs[username]) {
+        localLogs[username] = [];
+      }
+    });
+    localStorage.setItem("studyLogs", JSON.stringify(localLogs));
+
+    const startButton = document.getElementById("start-button");
+    const stopButton = document.getElementById("stop-button");
+    const logoutButton = document.getElementById("logout-button");
+    const elapsedTimeElement = document.getElementById("elapsed-time");
+    const totalHoursElement = document.getElementById("total-hours");
+    const progressBar = document.getElementById("progress-bar");
+    const studyLogsElement = document.getElementById("study-logs");
+    const downloadPdfButton = document.getElementById("download-pdf-button");
+    const rankingTable = document.getElementById("ranking-table").getElementsByTagName("tbody")[0];
+    const loginButton = document.getElementById("login-button");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const studyTrackerCard = document.getElementById("study-tracker");
+    const progressCard = document.getElementById("progress-card");
+    const studyLogsCard = document.getElementById("study-logs-card");
+    const leaderboardCard = document.getElementById("leaderboard-card");
+    const userCard = document.getElementById("user-card");
+
+    function setupApp() {
+      // Check initial state
+      if (user && predefinedUsers[user]) {
+        console.log("User found in localStorage:", user);
+        document.body.classList.remove("login-bg");
+        document.body.classList.add("main-bg");
+        showStudyInterface();
+      } else {
+        console.log("No user in localStorage, showing login");
+        document.body.classList.add("login-bg");
+        userCard.style.display = "block";
+      }
+
+      // Login handler
+      loginButton.addEventListener("click", () => {
+        loginButton.disabled = true;
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+        console.log("Login attempt:", { username, password });
+
+        // Case-insensitive username check
+        const normalizedUsername = Object.keys(predefinedUsers).find(
+          key => key.toLowerCase() === username.toLowerCase()
+        );
+
+        if (normalizedUsername && predefinedUsers[normalizedUsername] === password) {
+          user = normalizedUsername;
+          localStorage.setItem("currentUser", user);
+          console.log("Login successful for:", user);
+          document.body.classList.remove("login-bg");
+          document.body.classList.add("main-bg");
+          showStudyInterface();
+        } else {
+          console.error("Login failed: Invalid credentials");
+          alert("Invalid username or password. Please try again.");
+        }
+        loginButton.disabled = false;
+      });
+
+      logoutButton.addEventListener("click", () => {
+        if (isTiming) {
+          alert("Please stop the timer before logging out.");
+          return;
+        }
+        console.log("Logging out user:", user);
+        localStorage.removeItem("currentUser");
+        user = null;
+        total = 0;
+        document.body.classList.remove("main-bg");
+        document.body.classList.add("login-bg");
+        userCard.style.display = "block";
+        studyTrackerCard.style.display = "none";
+        progressCard.style.display = "none";
+        studyLogsCard.style.display = "none";
+        leaderboardCard.style.display = "none";
+        usernameInput.value = "";
+        passwordInput.value = "";
+      });
+
+      function showStudyInterface() {
+        console.log("Showing study interface for:", user);
+        userCard.style.display = "none";
+        studyTrackerCard.style.display = "block";
+        progressCard.style.display = "block";
+        studyLogsCard.style.display = "block";
+        leaderboardCard.style.display = "block";
+        loadUserData();
+        updateRanking();
+      }
+
+      // Load user data (Firebase or local fallback)
+      async function loadUserData() {
+        if (firebaseInitialized && db) {
+          console.log("Loading data from Firebase for:", user);
+          try {
+            const snapshot = await get(ref(db, `users/${user}/logs`));
+            const logs = snapshot.val() || [];
+            console.log("Loaded Firebase logs:", logs);
+            localLogs[user] = logs; // Sync to local
+            localStorage.setItem("studyLogs", JSON.stringify(localLogs));
+            updateLogs(logs);
+            total = logs.reduce((acc, log) => acc + log.hours, 0);
+            updateTotalHours();
+            updateProgress();
+          } catch (error) {
+            console.error("Failed to load Firebase data:", error.message);
+            alert(`Failed to load study data from server: ${error.message}. Using local data.`);
+            loadLocalData();
+          }
+        } else {
+          console.warn("Firebase not initialized, using local data");
+          loadLocalData();
+        }
+      }
+
+      // Fallback to local data
+      function loadLocalData() {
+        const logs = localLogs[user] || [];
+        console.log("Loaded local logs:", logs);
+        updateLogs(logs);
+        total = logs.reduce((acc, log) => acc + log.hours, 0);
+        updateTotalHours();
+        updateProgress();
+      }
+
+      startButton.addEventListener("click", () => {
+        startTime = new Date();
+        isTiming = true;
+        startButton.style.display = "none";
+        stopButton.style.display = "inline-block";
+        console.log("Study session started");
+        updateTimer();
+      });
+
+      stopButton.addEventListener("click", async () => {
+        if (!startTime) return;
+        const endTime = new Date();
+        const durationInHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(4);
+        const today = new Date().toISOString().split("T")[0];
+        const newLog = { date: today, hours: parseFloat(durationInHours) };
+        console.log("Saving log:", newLog);
+
+        // Update local logs
+        localLogs[user].push(newLog);
+        localStorage.setItem("studyLogs", JSON.stringify(localLogs));
+        total += parseFloat(durationInHours);
+
+        // Save to Firebase if available
+        if (firebaseInitialized && db) {
+          try {
+            await set(ref(db, `users/${user}/logs`), localLogs[user]);
+            console.log("Log saved to Firebase");
+          } catch (error) {
+            console.error("Failed to save log to Firebase:", error.message);
+            alert(`Saved locally, but failed to sync with server: ${error.message}. Data will sync when connection is restored.`);
+          }
+        } else {
+          console.warn("Firebase not initialized, saved locally only");
+        }
+
+        updateLogs(localLogs[user]);
+        updateTotalHours();
+        updateProgress();
+        updateRanking();
+
+        startTime = null;
+        isTiming = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        startButton.style.display = "inline-block";
+        stopButton.style.display = "none";
+        elapsedTimeElement.textContent = "00:00:00";
+      });
+
+      function updateTimer() {
+        if (isTiming && !timerInterval) {
+          timerInterval = setInterval(() => {
+            if (!isTiming) {
+              clearInterval(timerInterval);
+              timerInterval = null;
+              return;
+            }
+            const elapsed = (new Date() - startTime) / 1000;
+            elapsedTimeElement.textContent = formatElapsed(elapsed);
+          }, 1000);
+        }
+      }
+
+      function formatElapsed(seconds) {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      function updateTotalHours() {
+        totalHoursElement.textContent = `Total Hours: ${total.toFixed(4)} / ${goal}`;
+      }
+
+      function updateProgress() {
+        const progress = (total / goal) * 100;
+        progressBar.style.width = `${progress}%`;
+      }
+
+      function updateLogs(logs) {
+        studyLogsElement.innerHTML = "";
+        logs.forEach((log) => {
+          const logElement = document.createElement("li");
+          logElement.textContent = `${log.date}: ${log.hours.toFixed(4)} hrs`;
+          studyLogsElement.appendChild(logElement);
+        });
+      }
+
+      async function updateRanking() {
+        if (firebaseInitialized && db) {
+          try {
+            const snapshot = await get(ref(db, "users"));
+            const allUsersData = snapshot.val() || {};
+            const ranking = Object.keys(predefinedUsers).map(username => {
+              const logs = allUsersData[username]?.logs || [];
+              const totalHours = logs.reduce((acc, log) => acc + log.hours, 0);
+              return { username, totalHours };
+            });
+
+            ranking.sort((a, b) => b.totalHours - a.totalHours);
+
+            rankingTable.innerHTML = "";
+            ranking.forEach((user, index) => {
+              const row = rankingTable.insertRow();
+              row.insertCell(0).textContent = index + 1;
+              row.insertCell(1).textContent = user.username;
+              row.insertCell(2).textContent = user.totalHours.toFixed(4);
+            });
+          } catch (error) {
+            console.error("Failed to load Firebase ranking:", error.message);
+            alert(`Failed to load leaderboard from server: ${error.message}. Showing local data.`);
+            updateLocalRanking();
+          }
+        } else {
+          console.warn("Firebase not initialized, using local ranking");
+          updateLocalRanking();
+        }
+      }
+
+      // Fallback ranking using local data
+      function updateLocalRanking() {
+        const ranking = Object.keys(predefinedUsers).map(username => {
+          const logs = localLogs[username] || [];
+          const totalHours = logs.reduce((acc, log) => acc + log.hours, 0);
+          return { username, totalHours };
+        });
+
+        ranking.sort((a, b) => b.totalHours - a.totalHours);
+
+        rankingTable.innerHTML = "";
+        ranking.forEach((user, index) => {
+          const row = rankingTable.insertRow();
+          row.insertCell(0).textContent = index + 1;
+          row.insertCell(1).textContent = user.username;
+          row.insertCell(2).textContent = user.totalHours.toFixed(4);
+        });
+      }
+
+      downloadPdfButton.addEventListener("click", () => {
+        const logs = localLogs[user] || [];
+        const doc = new jsPDF();
+        doc.text("Study Tracker Summary", 20, 20);
+        doc.text(`Username: ${user}`, 20, 30);
+        doc.text(`Total Hours: ${total.toFixed(4)} / ${goal}`, 20, 40);
+        doc.text("Study Logs:", 20, 50);
+        let y = 60;
+        logs.forEach((log) => {
+          doc.text(`${log.date}: ${log.hours.toFixed(4)} hrs`, 20, y);
+          y += 10;
+        });
+        doc.save(`study_summary_${user}.pdf`);
+      });
+
+      // Start app if Firebase fails
+      if (!firebaseInitialized) {
+        setupApp();
+      }
+    }
+  </script>
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
