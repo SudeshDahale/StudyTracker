@@ -334,49 +334,75 @@
 
   <!-- Firebase SDK (Modular, via CDN) -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+    try {
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+      import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyC96gt8J80xUoOQNRlX8mAqXgom8zFde7I",
-      authDomain: "studytracker-d5c22.firebaseapp.com",
-      databaseURL: "https://studytracker-d5c22-default-rtdb.firebaseio.com",
-      projectId: "studytracker-d5c22",
-      storageBucket: "studytracker-d5c22.firebasestorage.app",
-      messagingSenderId: "805573474192",
-      appId: "1:805573474192:web:45cf5bd9d8be04b17ea515",
-      measurementId: "G-3PGS7L7NJG"
-    };
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyC96gt8J80xUoOQNRlX8mAqXgom8zFde7I",
+        authDomain: "studytracker-d5c22.firebaseapp.com",
+        databaseURL: "https://studytracker-d5c22-default-rtdb.firebaseio.com",
+        projectId: "studytracker-d5c22",
+        storageBucket: "studytracker-d5c22.firebasestorage.app",
+        messagingSenderId: "805573474192",
+        appId: "1:805573474192:web:45cf5bd9d8be04b17ea515",
+        measurementId: "G-3PGS7L7NJG"
+      };
 
-    // Initialize Firebase with retry mechanism
-    let db;
-    let firebaseInitialized = false;
-    function initializeFirebase(attempt = 1, maxAttempts = 3) {
-      try {
-        const app = initializeApp(firebaseConfig);
-        db = getDatabase(app);
-        getAnalytics(app); // Initialize analytics
-        firebaseInitialized = true;
-        console.log("Firebase initialized successfully");
-      } catch (error) {
-        console.error(`Firebase initialization failed (attempt ${attempt}):`, error.message);
-        if (attempt < maxAttempts) {
-          console.log(`Retrying Firebase initialization (attempt ${attempt + 1})...`);
-          setTimeout(() => initializeFirebase(attempt + 1, maxAttempts), 1000);
-        } else {
-          console.error("All Firebase initialization attempts failed");
-          alert(`Failed to connect to the database: ${error.message}. Using local mode, but data won't sync across devices.`);
-          setupApp();
+      // Initialize Firebase with retry mechanism
+      let db;
+      let firebaseInitialized = false;
+      function initializeFirebase(attempt = 1, maxAttempts = 3) {
+        try {
+          const app = initializeApp(firebaseConfig);
+          db = getDatabase(app);
+          getAnalytics(app); // Initialize analytics
+          firebaseInitialized = true;
+          console.log("Firebase initialized successfully");
+        } catch (error) {
+          console.error(`Firebase initialization failed (attempt ${attempt}):`, error.message);
+          if (attempt < maxAttempts) {
+            console.log(`Retrying Firebase initialization (attempt ${attempt + 1})...`);
+            setTimeout(() => initializeFirebase(attempt + 1, maxAttempts), 1000);
+          } else {
+            console.error("All Firebase initialization attempts failed");
+            alert(`Failed to connect to the database: ${error.message}. Using local mode, but data won't sync across devices.`);
+          }
         }
       }
+
+      // Initialize Firebase
+      initializeFirebase();
+
+      // Export Firebase functions for app script
+      window.firebaseFunctions = {
+        db,
+        getFirebaseInitialized: () => firebaseInitialized,
+        get,
+        set,
+        ref
+      };
+    } catch (error) {
+      console.error("Failed to load Firebase SDK:", error.message);
+      alert(`Failed to load Firebase SDK: ${error.message}. Using local mode, but data won't sync across devices.`);
+      window.firebaseFunctions = {
+        db: null,
+        getFirebaseInitialized: () => false,
+        get: null,
+        set: null,
+        ref: null
+      };
     }
+  </script>
 
-    // Initialize Firebase
-    initializeFirebase();
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    // jsPDF (for PDF download)
+  <!-- App Logic -->
+  <script>
+    console.log("Starting app initialization");
     const { jsPDF } = window.jspdf;
 
     const predefinedUsers = {
@@ -431,21 +457,21 @@
     const leaderboardCard = document.getElementById("leaderboard-card");
     const userCard = document.getElementById("user-card");
 
-    function setupApp() {
-      // Check initial state
-      if (user && predefinedUsers[user]) {
-        console.log("User found in localStorage:", user);
-        document.body.classList.remove("login-bg");
-        document.body.classList.add("main-bg");
-        showStudyInterface();
-      } else {
-        console.log("No user in localStorage, showing login");
-        document.body.classList.add("login-bg");
-        userCard.style.display = "block";
-      }
+    // Check initial state
+    if (user && predefinedUsers[user]) {
+      console.log("User found in localStorage:", user);
+      document.body.classList.remove("login-bg");
+      document.body.classList.add("main-bg");
+      showStudyInterface();
+    } else {
+      console.log("No user in localStorage, showing login");
+      document.body.classList.add("login-bg");
+      userCard.style.display = "block";
+    }
 
-      // Login handler
-      loginButton.addEventListener("click", () => {
+    // Login handler
+    loginButton.addEventListener("click", () => {
+      try {
         loginButton.disabled = true;
         const username = usernameInput.value.trim();
         const password = passwordInput.value;
@@ -467,10 +493,16 @@
           console.error("Login failed: Invalid credentials");
           alert("Invalid username or password. Please try again.");
         }
+      } catch (error) {
+        console.error("Login error:", error.message);
+        alert(`Login failed due to an error: ${error.message}. Please try again.`);
+      } finally {
         loginButton.disabled = false;
-      });
+      }
+    });
 
-      logoutButton.addEventListener("click", () => {
+    logoutButton.addEventListener("click", () => {
+      try {
         if (isTiming) {
           alert("Please stop the timer before logging out.");
           return;
@@ -488,64 +520,79 @@
         leaderboardCard.style.display = "none";
         usernameInput.value = "";
         passwordInput.value = "";
-      });
-
-      function showStudyInterface() {
-        console.log("Showing study interface for:", user);
-        userCard.style.display = "none";
-        studyTrackerCard.style.display = "block";
-        progressCard.style.display = "block";
-        studyLogsCard.style.display = "block";
-        leaderboardCard.style.display = "block";
-        loadUserData();
-        updateRanking();
+      } catch (error) {
+        console.error("Logout error:", error.message);
+        alert(`Logout failed: ${error.message}`);
       }
+    });
 
-      // Load user data (Firebase or local fallback)
-      async function loadUserData() {
-        if (firebaseInitialized && db) {
-          console.log("Loading data from Firebase for:", user);
-          try {
-            const snapshot = await get(ref(db, `users/${user}/logs`));
-            const logs = snapshot.val() || [];
-            console.log("Loaded Firebase logs:", logs);
-            localLogs[user] = logs; // Sync to local
-            localStorage.setItem("studyLogs", JSON.stringify(localLogs));
-            updateLogs(logs);
-            total = logs.reduce((acc, log) => acc + log.hours, 0);
-            updateTotalHours();
-            updateProgress();
-          } catch (error) {
-            console.error("Failed to load Firebase data:", error.message);
-            alert(`Failed to load study data from server: ${error.message}. Using local data.`);
-            loadLocalData();
-          }
-        } else {
-          console.warn("Firebase not initialized, using local data");
+    function showStudyInterface() {
+      console.log("Showing study interface for:", user);
+      userCard.style.display = "none";
+      studyTrackerCard.style.display = "block";
+      progressCard.style.display = "block";
+      studyLogsCard.style.display = "block";
+      leaderboardCard.style.display = "block";
+      loadUserData();
+      updateRanking();
+    }
+
+    // Load user data (Firebase or local fallback)
+    async function loadUserData() {
+      const firebaseInitialized = window.firebaseFunctions.getFirebaseInitialized();
+      const db = window.firebaseFunctions.db;
+      const get = window.firebaseFunctions.get;
+      const ref = window.firebaseFunctions.ref;
+
+      if (firebaseInitialized && db && get && ref) {
+        console.log("Loading data from Firebase for:", user);
+        try {
+          const snapshot = await get(ref(db, `users/${user}/logs`));
+          const logs = snapshot.val() || [];
+          console.log("Loaded Firebase logs:", logs);
+          localLogs[user] = logs; // Sync to local
+          localStorage.setItem("studyLogs", JSON.stringify(localLogs));
+          updateLogs(logs);
+          total = logs.reduce((acc, log) => acc + log.hours, 0);
+          updateTotalHours();
+          updateProgress();
+        } catch (error) {
+          console.error("Failed to load Firebase data:", error.message);
+          alert(`Failed to load study data from server: ${error.message}. Using local data.`);
           loadLocalData();
         }
+      } else {
+        console.warn("Firebase not initialized, using local data");
+        loadLocalData();
       }
+    }
 
-      // Fallback to local data
-      function loadLocalData() {
-        const logs = localLogs[user] || [];
-        console.log("Loaded local logs:", logs);
-        updateLogs(logs);
-        total = logs.reduce((acc, log) => acc + log.hours, 0);
-        updateTotalHours();
-        updateProgress();
-      }
+    // Fallback to local data
+    function loadLocalData() {
+      const logs = localLogs[user] || [];
+      console.log("Loaded local logs:", logs);
+      updateLogs(logs);
+      total = logs.reduce((acc, log) => acc + log.hours, 0);
+      updateTotalHours();
+      updateProgress();
+    }
 
-      startButton.addEventListener("click", () => {
+    startButton.addEventListener("click", () => {
+      try {
         startTime = new Date();
         isTiming = true;
         startButton.style.display = "none";
         stopButton.style.display = "inline-block";
         console.log("Study session started");
         updateTimer();
-      });
+      } catch (error) {
+        console.error("Start timer error:", error.message);
+        alert(`Failed to start timer: ${error.message}`);
+      }
+    });
 
-      stopButton.addEventListener("click", async () => {
+    stopButton.addEventListener("click", async () => {
+      try {
         if (!startTime) return;
         const endTime = new Date();
         const durationInHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(4);
@@ -559,7 +606,12 @@
         total += parseFloat(durationInHours);
 
         // Save to Firebase if available
-        if (firebaseInitialized && db) {
+        const firebaseInitialized = window.firebaseFunctions.getFirebaseInitialized();
+        const db = window.firebaseFunctions.db;
+        const set = window.firebaseFunctions.set;
+        const ref = window.firebaseFunctions.ref;
+
+        if (firebaseInitialized && db && set && ref) {
           try {
             await set(ref(db, `users/${user}/logs`), localLogs[user]);
             console.log("Log saved to Firebase");
@@ -583,98 +635,107 @@
         startButton.style.display = "inline-block";
         stopButton.style.display = "none";
         elapsedTimeElement.textContent = "00:00:00";
-      });
-
-      function updateTimer() {
-        if (isTiming && !timerInterval) {
-          timerInterval = setInterval(() => {
-            if (!isTiming) {
-              clearInterval(timerInterval);
-              timerInterval = null;
-              return;
-            }
-            const elapsed = (new Date() - startTime) / 1000;
-            elapsedTimeElement.textContent = formatElapsed(elapsed);
-          }, 1000);
-        }
+      } catch (error) {
+        console.error("Stop timer error:", error.message);
+        alert(`Failed to save study session: ${error.message}`);
       }
+    });
 
-      function formatElapsed(seconds) {
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-      }
-
-      function updateTotalHours() {
-        totalHoursElement.textContent = `Total Hours: ${total.toFixed(4)} / ${goal}`;
-      }
-
-      function updateProgress() {
-        const progress = (total / goal) * 100;
-        progressBar.style.width = `${progress}%`;
-      }
-
-      function updateLogs(logs) {
-        studyLogsElement.innerHTML = "";
-        logs.forEach((log) => {
-          const logElement = document.createElement("li");
-          logElement.textContent = `${log.date}: ${log.hours.toFixed(4)} hrs`;
-          studyLogsElement.appendChild(logElement);
-        });
-      }
-
-      async function updateRanking() {
-        if (firebaseInitialized && db) {
-          try {
-            const snapshot = await get(ref(db, "users"));
-            const allUsersData = snapshot.val() || {};
-            const ranking = Object.keys(predefinedUsers).map(username => {
-              const logs = allUsersData[username]?.logs || [];
-              const totalHours = logs.reduce((acc, log) => acc + log.hours, 0);
-              return { username, totalHours };
-            });
-
-            ranking.sort((a, b) => b.totalHours - a.totalHours);
-
-            rankingTable.innerHTML = "";
-            ranking.forEach((user, index) => {
-              const row = rankingTable.insertRow();
-              row.insertCell(0).textContent = index + 1;
-              row.insertCell(1).textContent = user.username;
-              row.insertCell(2).textContent = user.totalHours.toFixed(4);
-            });
-          } catch (error) {
-            console.error("Failed to load Firebase ranking:", error.message);
-            alert(`Failed to load leaderboard from server: ${error.message}. Showing local data.`);
-            updateLocalRanking();
+    function updateTimer() {
+      if (isTiming && !timerInterval) {
+        timerInterval = setInterval(() => {
+          if (!isTiming) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            return;
           }
-        } else {
-          console.warn("Firebase not initialized, using local ranking");
+          const elapsed = (new Date() - startTime) / 1000;
+          elapsedTimeElement.textContent = formatElapsed(elapsed);
+        }, 1000);
+      }
+    }
+
+    function formatElapsed(seconds) {
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateTotalHours() {
+      totalHoursElement.textContent = `Total Hours: ${total.toFixed(4)} / ${goal}`;
+    }
+
+    function updateProgress() {
+      const progress = (total / goal) * 100;
+      progressBar.style.width = `${progress}%`;
+    }
+
+    function updateLogs(logs) {
+      studyLogsElement.innerHTML = "";
+      logs.forEach((log) => {
+        const logElement = document.createElement("li");
+        logElement.textContent = `${log.date}: ${log.hours.toFixed(4)} hrs`;
+        studyLogsElement.appendChild(logElement);
+      });
+    }
+
+    async function updateRanking() {
+      const firebaseInitialized = window.firebaseFunctions.getFirebaseInitialized();
+      const db = window.firebaseFunctions.db;
+      const get = window.firebaseFunctions.get;
+      const ref = window.firebaseFunctions.ref;
+
+      if (firebaseInitialized && db && get && ref) {
+        try {
+          const snapshot = await get(ref(db, "users"));
+          const allUsersData = snapshot.val() || {};
+          const ranking = Object.keys(predefinedUsers).map(username => {
+            const logs = allUsersData[username]?.logs || [];
+            const totalHours = logs.reduce((acc, log) => acc + log.hours, 0);
+            return { username, totalHours };
+          });
+
+          ranking.sort((a, b) => b.totalHours - a.totalHours);
+
+          rankingTable.innerHTML = "";
+          ranking.forEach((user, index) => {
+            const row = rankingTable.insertRow();
+            row.insertCell(0).textContent = index + 1;
+            row.insertCell(1).textContent = user.username;
+            row.insertCell(2).textContent = user.totalHours.toFixed(4);
+          });
+        } catch (error) {
+          console.error("Failed to load Firebase ranking:", error.message);
+          alert(`Failed to load leaderboard from server: ${error.message}. Showing local data.`);
           updateLocalRanking();
         }
+      } else {
+        console.warn("Firebase not initialized, using local ranking");
+        updateLocalRanking();
       }
+    }
 
-      // Fallback ranking using local data
-      function updateLocalRanking() {
-        const ranking = Object.keys(predefinedUsers).map(username => {
-          const logs = localLogs[username] || [];
-          const totalHours = logs.reduce((acc, log) => acc + log.hours, 0);
-          return { username, totalHours };
-        });
+    function updateLocalRanking() {
+      const ranking = Object.keys(predefinedUsers).map(username => {
+        const logs = localLogs[username] || [];
+        const totalHours = logs.reduce((acc, log) => acc + log.hours, 0);
+        return { username, totalHours };
+      });
 
-        ranking.sort((a, b) => b.totalHours - a.totalHours);
+      ranking.sort((a, b) => b.totalHours - a.totalHours);
 
-        rankingTable.innerHTML = "";
-        ranking.forEach((user, index) => {
-          const row = rankingTable.insertRow();
-          row.insertCell(0).textContent = index + 1;
-          row.insertCell(1).textContent = user.username;
-          row.insertCell(2).textContent = user.totalHours.toFixed(4);
-        });
-      }
+      rankingTable.innerHTML = "";
+      ranking.forEach((user, index) => {
+        const row = rankingTable.insertRow();
+        row.insertCell(0).textContent = index + 1;
+        row.insertCell(1).textContent = user.username;
+        row.insertCell(2).textContent = user.totalHours.toFixed(4);
+      });
+    }
 
-      downloadPdfButton.addEventListener("click", () => {
+    downloadPdfButton.addEventListener("click", () => {
+      try {
         const logs = localLogs[user] || [];
         const doc = new jsPDF();
         doc.text("Study Tracker Summary", 20, 20);
@@ -687,15 +748,11 @@
           y += 10;
         });
         doc.save(`study_summary_${user}.pdf`);
-      });
-
-      // Start app if Firebase fails
-      if (!firebaseInitialized) {
-        setupApp();
+      } catch (error) {
+        console.error("PDF download error:", error.message);
+        alert(`Failed to download PDF: ${error.message}`);
       }
-    }
+    });
   </script>
-  <!-- jsPDF CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
